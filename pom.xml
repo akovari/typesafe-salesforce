@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <groupId>com.github.akovari</groupId>
+    <artifactId>typesafe-salesforce</artifactId>
+    <version>1.0-SNAPSHOT</version>
+
+    <packaging>pom</packaging>
+
+    <modules>
+        <module>annotations</module>
+        <module>ws</module>
+        <module>query</module>
+        <module>util</module>
+    </modules>
+
+    <properties>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <log4j.log4j.version>1.2.17</log4j.log4j.version>
+        <org.apache.velocity.velocity.version>1.7</org.apache.velocity.velocity.version>
+        <cxf-codegen-plugin.version>2.7.12</cxf-codegen-plugin.version>
+        <cxf.version>2.4.10</cxf.version>
+        <commons.lang.version>2.6</commons.lang.version>
+        <annotate.version>0.4.1.5</annotate.version>
+        <cxf.xjc.ts.version>2.4.0</cxf.xjc.ts.version>
+        <krasa.version>1.3</krasa.version>
+        <validation.api.version>1.1.0.Final</validation.api.version>
+        <scala-maven-plugin.version>3.1.6</scala-maven-plugin.version>
+        <maven-compiler-plugin.version>3.3</maven-compiler-plugin.version>
+        <scala.version>2.11.6</scala.version>
+        <lasius.version>2.1.40</lasius.version>
+        <scala-async.version>0.9.3</scala-async.version>
+        <joda-time.version>2.7</joda-time.version>
+        <specs2.version>2.4.16-scalaz-7.0.6</specs2.version>
+        <specs2-maven-plugin.version>0.4.4</specs2-maven-plugin.version>
+    </properties>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>net.alchim31.maven</groupId>
+                <artifactId>scala-maven-plugin</artifactId>
+                <version>${scala-maven-plugin.version}</version>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>compile</goal>
+                            <goal>testCompile</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <version>${maven-compiler-plugin.version}</version>
+                <configuration>
+                    <source>1.8</source>
+                    <target>1.8</target>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
+
+    <repositories>
+        <repository>
+            <id>scalaz-bintray</id>
+            <url>http://dl.bintray.com/scalaz/releases</url>
+        </repository>
+    </repositories>
+
+    <dependencies>
+        <dependency>
+            <groupId>org.scala-lang</groupId>
+            <artifactId>scala-library</artifactId>
+            <version>${scala.version}</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>org.scala-lang</groupId>
+                    <artifactId>scala-xml</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency>
+    </dependencies>
+</project>

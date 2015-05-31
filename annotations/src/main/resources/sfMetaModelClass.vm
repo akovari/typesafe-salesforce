@@ -1,0 +1,12 @@
+package ${packageName}
+
+import com.github.akovari.typesafeSalesforce.model.{Field => ModelField, MetaModel}
+import scala.reflect.runtime.universe._
+
+object ${className}_ extends MetaModel[${className}] {
+  val sfEntityName: String = "${entityName}"
+  val sfEntityType = typeTag[${className}]
+#foreach($const in $consts.keySet())
+  val `$consts.get($const)`: ModelField[$consts.get($const).asType().toString().replace("byte[]", "Array[Byte]")] = ModelField("${const}")
+#end
+}
