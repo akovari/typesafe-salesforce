@@ -36,6 +36,7 @@
         <joda-time.version>2.7</joda-time.version>
         <specs2.version>2.4.16-scalaz-7.0.6</specs2.version>
         <specs2-maven-plugin.version>0.4.4</specs2-maven-plugin.version>
+        <shapeless.version>2.2.0</shapeless.version>
     </properties>
 
     <build>

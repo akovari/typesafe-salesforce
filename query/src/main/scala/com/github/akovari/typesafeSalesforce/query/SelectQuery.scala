@@ -1,20 +1,23 @@
 package com.github.akovari.typesafeSalesforce.query
 
-import com.github.akovari.typesafeSalesforce.query.SelectQuery.SelectableColumn
+import shapeless._
 
-case class SelectQuery(columns: Seq[SelectableColumn] = Seq.empty,
+case class SelectQuery[C <: HList](columns: ColumnList[C],
                        entities: Seq[Entity] = Seq.empty,
                        filter: Option[Filter] = None,
-                       orders: Seq[Order] = Seq.empty,
-                       groupBys: Seq[GroupBy] = Seq.empty,
+                       orders: Seq[Order[_]] = Seq.empty,
+                       groupBys: Seq[GroupBy[_]] = Seq.empty,
                        limit: Option[Limit] = None) extends QueryStringProvider {
   override def toString = {
     val sb = new StringBuilder
     sb.append("SELECT ")
-    for (column <- columns) {
-      sb.append(column.fold(_.toString, _.toString))
-      sb.append(", ")
+
+    def iterateCols[C <: HList](l: C): String = l match {
+      case h :: t => s"${h}, ${iterateCols(t)}"
+      case _ => ""
     }
+
+    sb.append(iterateCols(columns.l))
     sb.delete(sb.length - 2, sb.length - 1)
     sb.append("FROM ")
     for (entity <- entities) {
@@ -59,59 +62,59 @@ case class SelectQuery(columns: Seq[SelectableColumn] = Seq.empty,
 }
 
 object SelectQuery {
-  type SelectableColumn = Either[SimpleColumn, EmbeddedSelectColumn]
+  type SelectableColumn[T, C <: HList] = Either[SimpleColumn[T], EmbeddedSelectColumn[T, C]]
 
-  def select(columns: SelectableColumn*) = SelectQueryStep(columns)
+  def select[C <: HList](columns: ColumnList[C]) = SelectQueryStep(columns)
 
-  sealed trait QueryStep {
-    val query: SelectQuery
+  sealed trait QueryStep[C <: HList] {
+    val query: SelectQuery[C]
 
     override def toString = query.toString
   }
 
-  case class SelectQueryStep(columns: Seq[SelectableColumn]) extends QueryStep {
+  case class SelectQueryStep[C <: HList](columns: ColumnList[C]) extends QueryStep[C] {
     override val query = SelectQuery(columns = columns)
 
-    def from(entities: Entity*): FromQueryStep = FromQueryStep(query, entities)
+    def from(entities: Entity*): FromQueryStep[C] = FromQueryStep(query, entities)
   }
 
-  case class FromQueryStep(sq: SelectQuery, entities: Seq[Entity]) extends QueryStep {
+  case class FromQueryStep[C <: HList](sq: SelectQuery[C], entities: Seq[Entity]) extends QueryStep[C] {
     override val query = SelectQuery(columns = sq.columns, entities = entities)
 
-    def where(filter: Filter): WhereQueryStep = WhereQueryStep(query, filter)
+    def where(filter: Filter): WhereQueryStep[C] = WhereQueryStep(query, filter)
 
-    def orderBy(orders: Order*): OrderQueryStep = OrderQueryStep(query, orders)
+    def orderBy(orders: Order[_]*): OrderQueryStep[C] = OrderQueryStep(query, orders)
 
-    def groupBy(groupBys: GroupBy*): GroupByQueryStep = GroupByQueryStep(query, groupBys)
+    def groupBy(groupBys: GroupBy[_]*): GroupByQueryStep[C] = GroupByQueryStep(query, groupBys)
 
-    def limit(limit: Limit): LimitQueryStep = LimitQueryStep(query, limit)
+    def limit(limit: Limit): LimitQueryStep[C] = LimitQueryStep(query, limit)
   }
 
-  case class WhereQueryStep(sq: SelectQuery, filter: Filter) extends QueryStep {
+  case class WhereQueryStep[C <: HList](sq: SelectQuery[C], filter: Filter) extends QueryStep[C] {
     override val query = SelectQuery(columns = sq.columns, entities = sq.entities, filter = Some(filter))
 
-    def orderBy(orders: Order*): OrderQueryStep = OrderQueryStep(query, orders)
+    def orderBy(orders: Order[_]*): OrderQueryStep[C] = OrderQueryStep(query, orders)
 
-    def groupBy(groupBys: GroupBy*): GroupByQueryStep = GroupByQueryStep(query, groupBys)
+    def groupBy(groupBys: GroupBy[_]*): GroupByQueryStep[C] = GroupByQueryStep(query, groupBys)
 
-    def limit(limit: Limit): LimitQueryStep = LimitQueryStep(query, limit)
+    def limit(limit: Limit): LimitQueryStep[C] = LimitQueryStep(query, limit)
   }
 
-  case class OrderQueryStep(sq: SelectQuery, orders: Seq[Order]) extends QueryStep {
+  case class OrderQueryStep[C <: HList](sq: SelectQuery[C], orders: Seq[Order[_]]) extends QueryStep[C] {
     override val query = SelectQuery(columns = sq.columns, entities = sq.entities, filter = sq.filter, orders = orders)
 
-    def groupBy(groupBys: GroupBy*): GroupByQueryStep = GroupByQueryStep(query, groupBys)
+    def groupBy(groupBys: GroupBy[_]*): GroupByQueryStep[C] = GroupByQueryStep(query, groupBys)
 
-    def limit(limit: Limit): LimitQueryStep = LimitQueryStep(query, limit)
+    def limit(limit: Limit): LimitQueryStep[C] = LimitQueryStep(query, limit)
   }
 
-  case class GroupByQueryStep(sq: SelectQuery, groupBys: Seq[GroupBy]) extends QueryStep {
+  case class GroupByQueryStep[C <: HList](sq: SelectQuery[C], groupBys: Seq[GroupBy[_]]) extends QueryStep[C] {
     override val query = SelectQuery(columns = sq.columns, entities = sq.entities, filter = sq.filter, orders = sq.orders, groupBys = groupBys)
 
-    def limit(limit: Limit): LimitQueryStep = LimitQueryStep(query, limit)
+    def limit(limit: Limit): LimitQueryStep[C] = LimitQueryStep(query, limit)
   }
 
-  case class LimitQueryStep(sq: SelectQuery, limit: Limit) extends QueryStep {
+  case class LimitQueryStep[C <: HList](sq: SelectQuery[C], limit: Limit) extends QueryStep[C] {
     override val query = SelectQuery(columns = sq.columns, entities = sq.entities, filter = sq.filter, orders = sq.orders, groupBys = sq.groupBys, limit = Some(limit))
   }
 }

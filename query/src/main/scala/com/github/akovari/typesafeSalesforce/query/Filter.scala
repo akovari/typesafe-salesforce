@@ -23,6 +23,6 @@ case class OrFilter(filter1: Filter, filter2: Filter, moreFilters: Filter*) exte
   override val operation = " OR "
 }
 
-case class ConditionFilter(condition: Condition) extends Filter {
+case class ConditionFilter[T](condition: Condition[T]) extends Filter {
   override def toString = condition.toString
 }

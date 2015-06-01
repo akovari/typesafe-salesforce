@@ -95,33 +95,6 @@ public class SalesForceAnnotationProcessor extends AbstractProcessor {
                     }
                 }
             }
-
-            for (Object k  : allMetaModels.keySet()) {
-                try {
-                    PackageElement packageElement = (PackageElement) k;
-
-                    VelocityContext vc = new VelocityContext();
-                    vc.put("packageName", packageElement.getQualifiedName().toString());
-                    vc.put("consts", allMetaModels.getCollection(k));
-                    vc.put("constsL", allMetaModels.getCollection(k).size());
-
-                    Template vt = ve.getTemplate("sfMetaModelsObject.vm");
-
-                    FileObject jfo = processingEnv.getFiler().createResource(StandardLocation.SOURCE_OUTPUT, packageElement.getQualifiedName().toString(), "package.scala");
-
-                    processingEnv.getMessager().printMessage(Diagnostic.Kind.NOTE, "creating source file: " + jfo.toUri());
-
-                    Writer writer = jfo.openWriter();
-
-                    processingEnv.getMessager().printMessage(Diagnostic.Kind.NOTE, "applying velocity template: " + vt.getName());
-
-                    vt.merge(vc, writer);
-
-                    writer.close();
-                } catch (IOException ex) {
-                    ex.printStackTrace();
-                }
-            }
         } catch (IOException ex) {
             ex.printStackTrace();
         }

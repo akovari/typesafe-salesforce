@@ -1,15 +1,17 @@
 package com.github.akovari.typesafeSalesforce.query
 
-sealed abstract class Order(column: Column) extends QueryStringProvider {
+import com.github.akovari.typesafeSalesforce.model.{Field => ModelField}
+
+sealed abstract class Order[T](column: SimpleColumn[T]) extends QueryStringProvider {
   protected val operation: String
 
   override def toString = column.toString + " " + operation
 }
 
-case class AscendingOrder(column: Column) extends Order(column) {
+case class AscendingOrder[T](column: SimpleColumn[T]) extends Order(column) {
   override val operation = "ASC"
 }
 
-case class DescendingOrder(column: Column) extends Order(column) {
+case class DescendingOrder[T](column: SimpleColumn[T]) extends Order(column) {
   override val operation = "DESC"
 }

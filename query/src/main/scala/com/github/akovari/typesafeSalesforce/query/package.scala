@@ -1,30 +1,29 @@
 package com.github.akovari.typesafeSalesforce
 
+import java.util.Calendar
+
 import com.github.akovari.typesafeSalesforce.cxf.enterprise.{SObject, QueryResult}
-import com.github.akovari.typesafeSalesforce.query.SelectQuery.{QueryStep, SelectableColumn}
+import com.github.akovari.typesafeSalesforce.query.SelectQuery._
+import shapeless._
+import shapeless.ops.hlist._
 
 import scala.collection.GenSeq
 import com.github.akovari.typesafeSalesforce.model.{Field => ModelField, MetaModel}
 import scala.reflect.runtime.universe._
-import scala.collection.JavaConverters._
 
 /**
  * Created by akovari on 03.11.14.
  */
 package object query {
-  implicit def fieldToSelectableColumn[T](col: ModelField[T]): SelectableColumn = Left(SimpleColumn(col.name))
+  implicit def queryStepToSelectableColumn[T, C <: HList](qs: QueryStep[C]): EmbeddedSelectColumn[T, C] = qs.query
 
-  implicit def columnToSelectableColumn(col: SimpleColumn): SelectableColumn = Left(col)
-
-  implicit def queryStepToSelectableColumn(qs: QueryStep): SelectableColumn = Right(qs.query)
-
-  implicit def queryStepToSelectQuery(qs: QueryStep): SelectQuery = qs.query
+  implicit def queryStepToSelectQuery[C <: HList](qs: QueryStep[C]): SelectQuery[C] = qs.query
 
   implicit def stringToEntity(ent: String): Entity = Entity(ent)
 
   implicit def fieldToEntity(ent: ModelField[QueryResult]): Entity = Entity(ent.name)
 
-  implicit def fieldToColumn[T](col: ModelField[T]): SimpleColumn = SimpleColumn(col.name)
+  implicit def fieldToColumn[T](col: ModelField[T]): SimpleColumn[T] = SimpleColumn(col.name)
 
   implicit def intToField(v: Int): IntegerField = IntegerField(v)
 
@@ -38,23 +37,25 @@ package object query {
 
   implicit def stringToField(v: String): StringField = StringField(v)
 
-  implicit def queryToColumn(v: SelectQuery): EmbeddedSelectColumn = EmbeddedSelectColumn(v)
+  implicit def calendarToField(v: Calendar): CalendarField = CalendarField(v)
 
-  implicit def stringToGroupBy(v: String): GroupBy = GroupBy(v)
+  implicit def queryToColumn[T, C <: HList](v: SelectQuery[C]): EmbeddedSelectColumn[T, C] = EmbeddedSelectColumn(v)
 
-  implicit def collectionToCollectionField[T](v: GenSeq[Field]): CollectionField = CollectionField(v)
+  implicit def stringToGroupBy[T](v: String): GroupBy[T] = GroupBy(v)
+
+  implicit def collectionToCollectionField[T](v: GenSeq[Field[T]]): CollectionField[T] = CollectionField(v)
 
   implicit def intToLimit(v: Int): Limit = Limit(v)
 
-  implicit def conditionToFilter(cond: Condition): ConditionFilter = ConditionFilter(cond)
+  implicit def conditionToFilter[T](cond: Condition[T]): ConditionFilter[T] = ConditionFilter(cond)
 
-  implicit def stringCollectionToFieldCollection[T](v: GenSeq[String]): CollectionField = CollectionField(v.map(v => StringField(v)))
+  implicit def stringCollectionToFieldCollection(v: GenSeq[String]): CollectionField[String] = CollectionField(v.map(v => StringField(v)))
 
-  implicit def intCollectionToFieldCollection[T](v: GenSeq[Int]): CollectionField = CollectionField(v.map(v => IntegerField(v)))
+  implicit def intCollectionToFieldCollection[T](v: GenSeq[Int]): CollectionField[Int] = CollectionField(v.map(v => IntegerField(v)))
 
-  implicit def doubleCollectionToFieldCollection[T](v: GenSeq[Double]): CollectionField = CollectionField(v.map(v => DoubleField(v)))
+  implicit def doubleCollectionToFieldCollection[T](v: GenSeq[Double]): CollectionField[Double] = CollectionField(v.map(v => DoubleField(v)))
 
-  implicit def booleanCollectionToFieldCollection[T](v: GenSeq[Boolean]): CollectionField = CollectionField(v.map(v => BooleanField(v)))
+  implicit def booleanCollectionToFieldCollection[T](v: GenSeq[Boolean]): CollectionField[Boolean] = CollectionField(v.map(v => BooleanField(v)))
 
   implicit def metaModelToEntity[T <: SObject](m: MetaModel[T]): Entity = Entity(m.sfEntityName)
 
@@ -65,4 +66,23 @@ package object query {
   }
 
   implicit def fieldOfEntityToEntity[T <: SObject](f: ModelField[T])(implicit t: TypeTag[T]): Entity = Entity(sfEntityToMetaModel[T].sfEntityName)
+
+  case class ColumnList[L <: HList](l : L)
+
+  object FieldPoly extends Poly1 {
+    implicit def caseField[T, S <% ModelField[T]] = at[ModelField[T]](f => fieldToColumn(f).toString)
+
+    implicit def caseSelectQueryStep[T, C <: HList, QS <: SelectQueryStep[C], S <% QS] = at[SelectQueryStep[C]](qs => EmbeddedSelectColumn[T, C](qs).toString)
+    implicit def caseFromQueryStep[T, C <: HList, QS <: FromQueryStep[C], S <% QS] = at[FromQueryStep[C]](qs => EmbeddedSelectColumn[T, C](qs).toString)
+    implicit def caseWhereQueryStep[T, C <: HList, QS <: WhereQueryStep[C], S <% QS] = at[WhereQueryStep[C]](qs => EmbeddedSelectColumn[T, C](qs).toString)
+    implicit def caseOrderQueryStep[T, C <: HList, QS <: OrderQueryStep[C], S <% QS] = at[OrderQueryStep[C]](qs => EmbeddedSelectColumn[T, C](qs).toString)
+    implicit def caseGroupByQueryStep[T, C <: HList, QS <: GroupByQueryStep[C], S <% QS] = at[GroupByQueryStep[C]](qs => EmbeddedSelectColumn[T, C](qs).toString)
+    implicit def caseLimitQueryStep[T, C <: HList, QS <: LimitQueryStep[C], S <% QS] = at[LimitQueryStep[C]](qs => EmbeddedSelectColumn[T, C](qs).toString)
+
+    implicit def caseSimpleColumn[T, SC <: SimpleColumn[T], S <% SC] = at[SimpleColumn[T]](_.toString)
+    implicit def caseEmbeddedSelectColumn[T, C <: HList, SC <: EmbeddedSelectColumn[T, C], S <% SC] = at[EmbeddedSelectColumn[T, C]](_.toString)
+  }
+
+  implicit def hlistToColumnList[L <: HList, M <: HList](a: L)(implicit mapper: Mapper.Aux[FieldPoly.type, L, M]) =
+    new ColumnList[M]((a map FieldPoly))
 }

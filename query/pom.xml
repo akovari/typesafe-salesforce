@@ -59,5 +59,10 @@
             <artifactId>scala-reflect</artifactId>
             <version>${scala.version}</version>
         </dependency>
+        <dependency>
+            <groupId>com.chuusai</groupId>
+            <artifactId>shapeless_2.11</artifactId>
+            <version>${shapeless.version}</version>
+        </dependency>
     </dependencies>
 </project>

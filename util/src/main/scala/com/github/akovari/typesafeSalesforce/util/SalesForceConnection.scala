@@ -5,6 +5,7 @@ import com.github.akovari.typesafeSalesforce.query.SelectQuery
 import org.flossware.util.properties.FilePropertiesMgr
 import org.solenopsis.lasius.credentials.PropertiesCredentials
 import org.solenopsis.lasius.wsimport.util.EnterpriseWebServiceUtil
+import shapeless.HList
 
 import scala.async.Async.{async, await}
 import scala.collection.JavaConverters._
@@ -44,7 +45,7 @@ trait SalesForceConnection {
   ))
 
   @throws(classOf[SalesForceQueryException])
-  def query[T <: SObject](query: SelectQuery)(implicit executionContext: ExecutionContext): Future[Seq[T]] = async {
+  def query[T <: SObject, C <: HList](query: SelectQuery[C])(implicit executionContext: ExecutionContext): Future[Seq[T]] = async {
     val p = await(port)
     Try(p.queryAll(query.toString)) match {
       case Success(r) => await(r)
