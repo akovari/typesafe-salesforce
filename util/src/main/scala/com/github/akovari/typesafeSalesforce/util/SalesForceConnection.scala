@@ -26,7 +26,7 @@ trait SalesForceConversions {
   implicit def queryResultToList[T](qResult: QueryResult)(implicit executionContext: ExecutionContext): Future[Seq[T]] =
     async {
       if (qResult != null && qResult.getSize > 0) {
-        val records = qResult.getRecords.asScala.toStream.asInstanceOf[Seq[T]]
+        val records = qResult.getRecords.asScala.toSeq.asInstanceOf[Seq[T]]
         if (qResult.isDone) records
         else records ++ await(queryResultToList(await(port).queryMore(qResult.getQueryLocator)))
       } else {

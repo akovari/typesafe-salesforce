@@ -5,19 +5,19 @@ import shapeless._
 case class SelectQuery[C <: HList](columns: ColumnList[C],
                        entities: Seq[Entity] = Seq.empty,
                        filter: Option[Filter] = None,
-                       orders: Seq[Order[_]] = Seq.empty,
+                       orders: Option[OrderList[_ <: HList]],
                        groupBys: Seq[GroupBy[_]] = Seq.empty,
                        limit: Option[Limit] = None) extends QueryStringProvider {
+  private def iterateHlist[C <: HList](l: C): String = l match {
+    case h :: t => s"${h}, ${iterateHlist(t)}"
+    case _ => ""
+  }
+
   override def toString = {
     val sb = new StringBuilder
     sb.append("SELECT ")
 
-    def iterateCols[C <: HList](l: C): String = l match {
-      case h :: t => s"${h}, ${iterateCols(t)}"
-      case _ => ""
-    }
-
-    sb.append(iterateCols(columns.l))
+    sb.append(iterateHlist(columns.l))
     sb.delete(sb.length - 2, sb.length - 1)
     sb.append("FROM ")
     for (entity <- entities) {
@@ -40,19 +40,16 @@ case class SelectQuery[C <: HList](columns: ColumnList[C],
       }
       sb.delete(sb.length - 2, sb.length - 1)
     }
-    if (!orders.isEmpty) {
+    if (orders.isDefined && orders.get.l != HNil) {
       if (filter.isDefined) {
         sb.append(" ")
       }
       sb.append("ORDER BY ")
-      for (order <- orders) {
-        sb.append(order.toString)
-        sb.append(", ")
-      }
+      sb.append(iterateHlist(orders.get.l))
       sb.delete(sb.length - 2, sb.length - 1)
     }
     if (limit.isDefined) {
-      if (filter.isDefined && orders.isEmpty) {
+      if (filter.isDefined && orders.isDefined && orders.get.l != HNil) {
         sb.append(" ")
       }
       sb.append("LIMIT " + limit.get.value)
@@ -73,17 +70,17 @@ object SelectQuery {
   }
 
   case class SelectQueryStep[C <: HList](columns: ColumnList[C]) extends QueryStep[C] {
-    override val query = SelectQuery(columns = columns)
+    override val query = SelectQuery(columns = columns, orders = None)
 
     def from(entities: Entity*): FromQueryStep[C] = FromQueryStep(query, entities)
   }
 
   case class FromQueryStep[C <: HList](sq: SelectQuery[C], entities: Seq[Entity]) extends QueryStep[C] {
-    override val query = SelectQuery(columns = sq.columns, entities = entities)
+    override val query = SelectQuery(columns = sq.columns, entities = entities, orders = None)
 
     def where(filter: Filter): WhereQueryStep[C] = WhereQueryStep(query, filter)
 
-    def orderBy(orders: Order[_]*): OrderQueryStep[C] = OrderQueryStep(query, orders)
+    def orderBy[O <: HList](orders: OrderList[O]): OrderQueryStep[C, O] = OrderQueryStep(query, orders)
 
     def groupBy(groupBys: GroupBy[_]*): GroupByQueryStep[C] = GroupByQueryStep(query, groupBys)
 
@@ -91,17 +88,17 @@ object SelectQuery {
   }
 
   case class WhereQueryStep[C <: HList](sq: SelectQuery[C], filter: Filter) extends QueryStep[C] {
-    override val query = SelectQuery(columns = sq.columns, entities = sq.entities, filter = Some(filter))
+    override val query = SelectQuery(columns = sq.columns, entities = sq.entities, filter = Some(filter), orders = None)
 
-    def orderBy(orders: Order[_]*): OrderQueryStep[C] = OrderQueryStep(query, orders)
+    def orderBy[O <: HList](orders: OrderList[O]): OrderQueryStep[C, O] = OrderQueryStep(query, orders)
 
     def groupBy(groupBys: GroupBy[_]*): GroupByQueryStep[C] = GroupByQueryStep(query, groupBys)
 
     def limit(limit: Limit): LimitQueryStep[C] = LimitQueryStep(query, limit)
   }
 
-  case class OrderQueryStep[C <: HList](sq: SelectQuery[C], orders: Seq[Order[_]]) extends QueryStep[C] {
-    override val query = SelectQuery(columns = sq.columns, entities = sq.entities, filter = sq.filter, orders = orders)
+  case class OrderQueryStep[C <: HList, O <: HList](sq: SelectQuery[C], orders: OrderList[O]) extends QueryStep[C] {
+    override val query = SelectQuery(columns = sq.columns, entities = sq.entities, filter = sq.filter, orders = Some(orders))
 
     def groupBy(groupBys: GroupBy[_]*): GroupByQueryStep[C] = GroupByQueryStep(query, groupBys)
 

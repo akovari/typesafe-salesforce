@@ -42,7 +42,9 @@ case class AggregatedColumn[T](name: String, `type`: AggregatedColumnType.Value)
   override def toString: String = `type`.toString + "(" + super.toString + ")"
 }
 
-case class GroupBy[T](name: String) extends QueryStringProvider
+case class GroupBy[T](name: String) extends QueryStringProvider {
+  override def toString = name
+}
 
 case class SimpleColumn[T](name: String) extends Column[T](name) {
   override def toString = name

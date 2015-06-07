@@ -2,20 +2,20 @@ package com.github.akovari.typesafeSalesforce
 
 import java.util.Calendar
 
-import com.github.akovari.typesafeSalesforce.cxf.enterprise.{SObject, QueryResult}
+import com.github.akovari.typesafeSalesforce.cxf.enterprise.{QueryResult, SObject}
+import com.github.akovari.typesafeSalesforce.model.{Field => ModelField, MetaModel}
 import com.github.akovari.typesafeSalesforce.query.SelectQuery._
 import shapeless._
 import shapeless.ops.hlist._
 
 import scala.collection.GenSeq
-import com.github.akovari.typesafeSalesforce.model.{Field => ModelField, MetaModel}
 import scala.reflect.runtime.universe._
 
 /**
  * Created by akovari on 03.11.14.
  */
 package object query {
-  implicit def queryStepToSelectableColumn[T, C <: HList](qs: QueryStep[C]): EmbeddedSelectColumn[T, C] = qs.query
+  implicit def queryStepToSelectableColumn[T, C <: HList, O <: HList](qs: QueryStep[C]): EmbeddedSelectColumn[T, C] = qs.query
 
   implicit def queryStepToSelectQuery[C <: HList](qs: QueryStep[C]): SelectQuery[C] = qs.query
 
@@ -43,6 +43,8 @@ package object query {
 
   implicit def stringToGroupBy[T](v: String): GroupBy[T] = GroupBy(v)
 
+  implicit def fieldToGroupBy[T](col: ModelField[T]): GroupBy[T] = GroupBy(col.name)
+
   implicit def collectionToCollectionField[T](v: GenSeq[Field[T]]): CollectionField[T] = CollectionField(v)
 
   implicit def intToLimit(v: Int): Limit = Limit(v)
@@ -67,15 +69,17 @@ package object query {
 
   implicit def fieldOfEntityToEntity[T <: SObject](f: ModelField[T])(implicit t: TypeTag[T]): Entity = Entity(sfEntityToMetaModel[T].sfEntityName)
 
+
   case class ColumnList[L <: HList](l : L)
 
-  object FieldPoly extends Poly1 {
+  object ColumnPoly extends Poly1 {
     implicit def caseField[T, S <% ModelField[T]] = at[ModelField[T]](f => fieldToColumn(f).toString)
 
     implicit def caseSelectQueryStep[T, C <: HList, QS <: SelectQueryStep[C], S <% QS] = at[SelectQueryStep[C]](qs => EmbeddedSelectColumn[T, C](qs).toString)
     implicit def caseFromQueryStep[T, C <: HList, QS <: FromQueryStep[C], S <% QS] = at[FromQueryStep[C]](qs => EmbeddedSelectColumn[T, C](qs).toString)
     implicit def caseWhereQueryStep[T, C <: HList, QS <: WhereQueryStep[C], S <% QS] = at[WhereQueryStep[C]](qs => EmbeddedSelectColumn[T, C](qs).toString)
-    implicit def caseOrderQueryStep[T, C <: HList, QS <: OrderQueryStep[C], S <% QS] = at[OrderQueryStep[C]](qs => EmbeddedSelectColumn[T, C](qs).toString)
+
+    implicit def caseOrderQueryStep[T, C <: HList, O <: HList, QS <: OrderQueryStep[C, O], S <% QS] = at[OrderQueryStep[C, O]](qs => EmbeddedSelectColumn[T, C](qs).toString)
     implicit def caseGroupByQueryStep[T, C <: HList, QS <: GroupByQueryStep[C], S <% QS] = at[GroupByQueryStep[C]](qs => EmbeddedSelectColumn[T, C](qs).toString)
     implicit def caseLimitQueryStep[T, C <: HList, QS <: LimitQueryStep[C], S <% QS] = at[LimitQueryStep[C]](qs => EmbeddedSelectColumn[T, C](qs).toString)
 
@@ -83,6 +87,18 @@ package object query {
     implicit def caseEmbeddedSelectColumn[T, C <: HList, SC <: EmbeddedSelectColumn[T, C], S <% SC] = at[EmbeddedSelectColumn[T, C]](_.toString)
   }
 
-  implicit def hlistToColumnList[L <: HList, M <: HList](a: L)(implicit mapper: Mapper.Aux[FieldPoly.type, L, M]) =
-    new ColumnList[M]((a map FieldPoly))
+  implicit def hlistToColumnList[L <: HList, M <: HList](a: L)(implicit mapper: Mapper.Aux[ColumnPoly.type, L, M]): ColumnList[M] =
+    new ColumnList[M]((a map ColumnPoly))
+
+
+  case class OrderList[L <: HList](l: L)
+
+  object OrderPoly extends Poly1 {
+    implicit def caseAsc[T, S <% AscendingOrder[T]] = at[AscendingOrder[T]](_.toString)
+
+    implicit def caseDesc[T, S <% DescendingOrder[T]] = at[DescendingOrder[T]](_.toString)
+  }
+
+  implicit def hlistToOrderList[L <: HList, M <: HList](a: L)(implicit mapper: Mapper.Aux[OrderPoly.type, L, M]): OrderList[M] =
+    new OrderList[M]((a map OrderPoly))
 }
