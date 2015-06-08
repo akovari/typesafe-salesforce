@@ -7,26 +7,26 @@ import shapeless.HList
 
 import scala.collection.GenSeq
 
-sealed trait Field[+T] extends QueryStringProvider {
-  def :==[TO >: T](o: Field[TO]) = EqualsCondition(this, o)
+sealed trait Field[T] extends QueryStringProvider {
+  def :==(o: Field[T]) = EqualsCondition(this, o)
 
-  def :!=[TO >: T](o: Field[TO]) = NotEqualsCondition(this, o)
+  def :!=(o: Field[T]) = NotEqualsCondition(this, o)
 
-  def :<=[TO >: T](o: Field[TO]) = LowerOrEqualsCondition(this, o)
+  def :<=(o: Field[T]) = LowerOrEqualsCondition(this, o)
 
-  def :>=[TO >: T](o: Field[TO]) = GreaterOrEqualsCondition(this, o)
+  def :>=(o: Field[T]) = GreaterOrEqualsCondition(this, o)
 
-  def :<[TO >: T](o: Field[TO]) = LowerCondition(this, o)
+  def :<(o: Field[T]) = LowerCondition(this, o)
 
-  def :>[TO >: T](o: Field[TO]) = GreaterCondition(this, o)
+  def :>(o: Field[T]) = GreaterCondition(this, o)
 
-  def between[TO >: T](l: Field[TO], r: Field[TO]) = BetweenCondition(this, l, r)
+  def between(l: Field[T], r: Field[T]) = BetweenCondition(this, l, r)
 
-  def like[TO >: T](o: Field[TO]) = LikeCondition(this, o)
+  def like(o: Field[T]) = LikeCondition(this, o)
 
-  def in[TO >: T](o: CollectionField[TO]) = InCondition(this, o)
+  def in(o: CollectionField[T]) = InCondition(this, o)
 
-  def notIn[TO >: T](o: CollectionField[TO]) = NotInCondition(this, o)
+  def notIn(o: CollectionField[T]) = NotInCondition(this, o)
 }
 
 sealed abstract class Column[T](name: String) extends Field[T] {
@@ -83,7 +83,7 @@ case class StringField(value: String) extends Field[String] {
   override def toString = "'" + value + "'"
 }
 
-case class BooleanField(value: Boolean) extends Field[Boolean] {
+case class BooleanField(value: java.lang.Boolean) extends Field[java.lang.Boolean] {
   override def toString = value.toString
 }
 

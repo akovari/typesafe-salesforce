@@ -1,12 +1,16 @@
 package com.github.akovari.typesafeSalesforce.query
 
-sealed abstract class Condition[T](left: Field[T], right: Field[T]) extends QueryStringProvider {
+sealed trait ConditionLike extends QueryStringProvider{
   protected val operator: String
+  val left: Field[_]
+  val right: Field[_]
 
   override def toString: String = {
     "(" + left.toString + " " + operator + " " + right.toString + ")"
   }
+}
 
+sealed abstract class Condition[T](left: Field[T], right: Field[T]) extends ConditionLike {
   def and[TO](o: Condition[TO]) = AndFilter(this, o)
   def or[TO](o: Condition[TO]) = OrFilter(this, o)
 
@@ -50,7 +54,7 @@ case class LikeCondition[T](left: Field[T], right: Field[T]) extends Condition(l
   override val operator = " LIKE "
 }
 
-sealed abstract class CollectionCondition[T](left: Field[T], right: Field[T]) extends Condition(left, right) {
+sealed trait CollectionConditionLike extends ConditionLike {
   override def toString: String = {
     val sb = new StringBuilder
     sb.append(left.toString)
@@ -68,18 +72,22 @@ sealed abstract class CollectionCondition[T](left: Field[T], right: Field[T]) ex
   }
 }
 
-case class ExcludesCondition[T](left: CollectionField[T], right: Field[T]) extends CollectionCondition(left, right) {
+sealed abstract class RightCollectionCondition[T](left: Field[T], right: CollectionField[T]) extends CollectionConditionLike
+
+sealed abstract class LeftCollectionCondition[T](left: CollectionField[T], right: Field[T]) extends CollectionConditionLike
+
+case class ExcludesCondition[T](left: CollectionField[T], right: Field[T]) extends LeftCollectionCondition(left, right) {
   override val operator = " EXCLUDES "
 }
 
-case class IncludesCondition[T](left: CollectionField[T], right: Field[T]) extends CollectionCondition(left, right) {
+case class IncludesCondition[T](left: CollectionField[T], right: Field[T]) extends LeftCollectionCondition(left, right) {
   override val operator = " INCLUDES "
 }
 
-case class InCondition[T](left: Field[T], right: CollectionField[T]) extends CollectionCondition(left, right) {
+case class InCondition[T](left: Field[T], right: CollectionField[T]) extends RightCollectionCondition(left, right) {
   override val operator = " IN "
 }
 
-case class NotInCondition[T](left: Field[T], right: CollectionField[T]) extends CollectionCondition(left, right) {
+case class NotInCondition[T](left: Field[T], right: CollectionField[T]) extends RightCollectionCondition(left, right) {
   override val operator = " NOT IN "
 }

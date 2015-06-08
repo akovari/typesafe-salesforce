@@ -57,7 +57,7 @@ package object query {
 
   implicit def doubleCollectionToFieldCollection[T](v: GenSeq[Double]): CollectionField[Double] = CollectionField(v.map(v => DoubleField(v)))
 
-  implicit def booleanCollectionToFieldCollection[T](v: GenSeq[Boolean]): CollectionField[Boolean] = CollectionField(v.map(v => BooleanField(v)))
+  implicit def booleanCollectionToFieldCollection[T](v: GenSeq[java.lang.Boolean]): CollectionField[java.lang.Boolean] = CollectionField(v.map(v => BooleanField(v)))
 
   implicit def metaModelToEntity[T <: SObject](m: MetaModel[T]): Entity = Entity(m.sfEntityName)
 
