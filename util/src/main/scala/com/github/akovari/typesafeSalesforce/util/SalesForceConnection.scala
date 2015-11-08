@@ -2,6 +2,8 @@ package com.github.akovari.typesafeSalesforce.util
 
 import com.github.akovari.typesafeSalesforce.cxf.enterprise.{QueryResult, SObject, SforceService, Soap}
 import com.github.akovari.typesafeSalesforce.query.SelectQuery
+import com.sun.xml.internal.ws.Closeable
+import com.sun.xml.internal.ws.developer.WSBindingProvider
 import org.flossware.util.properties.FilePropertiesMgr
 import org.solenopsis.lasius.credentials.PropertiesCredentials
 import org.solenopsis.lasius.wsimport.util.EnterpriseWebServiceUtil
@@ -13,15 +15,16 @@ import scala.concurrent.{ExecutionContext, Future}
 import scala.util.{Failure, Success, Try}
 
 /**
- * User: akovari
- * Date: 5/13/14
- * Time: 10:37 AM
- */
+  * User: akovari
+  * Date: 5/13/14
+  * Time: 10:37 AM
+  */
 
 case class SalesForceQueryException(query: String, rootCause: Throwable) extends Exception(query, rootCause)
-
 trait SalesForceConversions {
-  implicit val port: Future[Soap]
+  type PortType = Soap with WSBindingProvider with Closeable
+
+  implicit val port: Future[PortType]
 
   implicit def queryResultToList[T](qResult: QueryResult)(implicit executionContext: ExecutionContext): Future[Seq[T]] =
     async {
@@ -39,10 +42,14 @@ trait SalesForceConnection {
   this: SalesForceConversions =>
   implicit val executionContext: ExecutionContext
 
-  implicit val port: Future[Soap] = async(EnterpriseWebServiceUtil.createEnterpriseProxyPort(
-    new PropertiesCredentials(new FilePropertiesMgr(getClass.getResource("salesforce.properties").getPath)),
-    classOf[SforceService]
-  ))
+  implicit val port: Future[PortType] = Future {
+    val p: PortType = EnterpriseWebServiceUtil.createEnterpriseProxyPort(
+      new PropertiesCredentials(new FilePropertiesMgr(getClass.getClassLoader.getResource("salesforce.properties").getPath)),
+      "enterprise.wsdl.xml",
+      classOf[SforceService]
+    )
+    p
+  }
 
   @throws(classOf[SalesForceQueryException])
   def query[T <: SObject, C <: HList](query: SelectQuery[C])(implicit executionContext: ExecutionContext): Future[Seq[T]] = async {

@@ -72,7 +72,15 @@
             <id>scalaz-bintray</id>
             <url>http://dl.bintray.com/scalaz/releases</url>
         </repository>
-    </repositories>
+        <repository>
+            <id>bintray-flossware-maven</id>
+	    <url>http://dl.bintray.com/flossware/maven</url>
+        </repository>
+         <repository>
+            <id>bintray-solenopsis-maven</id>
+	    <url>http://dl.bintray.com/solenopsis/maven</url>
+        </repository>
+     </repositories>
 
     <dependencies>
         <dependency>
