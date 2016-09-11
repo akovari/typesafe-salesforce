@@ -28,14 +28,14 @@
         <cxf.xjc.ts.version>2.4.0</cxf.xjc.ts.version>
         <krasa.version>1.3</krasa.version>
         <validation.api.version>1.1.0.Final</validation.api.version>
-        <scala-maven-plugin.version>3.2.0</scala-maven-plugin.version>
+        <scala-maven-plugin.version>3.2.1</scala-maven-plugin.version>
         <maven-compiler-plugin.version>3.3</maven-compiler-plugin.version>
-        <scala.version>2.11.6</scala.version>
-        <lasius.version>2.1.40</lasius.version>
-        <scala-async.version>0.9.3</scala-async.version>
+        <scala.version>2.11.7</scala.version>
+        <lasius.version>3.0.26</lasius.version>
+        <scala-async.version>0.9.5</scala-async.version>
         <joda-time.version>2.7</joda-time.version>
         <scalatest.version>2.2.4</scalatest.version>
-        <shapeless.version>2.2.1</shapeless.version>
+        <shapeless.version>2.3.0</shapeless.version>
         <maven.surefire.plugin.version>2.18.1</maven.surefire.plugin.version>
         <maven.scalatest.plugin.version>1.0</maven.scalatest.plugin.version>
     </properties>

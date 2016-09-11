@@ -1,12 +1,14 @@
 package com.github.akovari.typesafeSalesforce.util
 
+import java.io.File
+
 import com.github.akovari.typesafeSalesforce.cxf.enterprise.{QueryResult, SObject, SforceService, Soap}
 import com.github.akovari.typesafeSalesforce.query.SelectQuery
 import com.sun.xml.internal.ws.Closeable
 import com.sun.xml.internal.ws.developer.WSBindingProvider
 import org.flossware.util.properties.FilePropertiesMgr
 import org.solenopsis.lasius.credentials.PropertiesCredentials
-import org.solenopsis.lasius.wsimport.util.EnterpriseWebServiceUtil
+import org.solenopsis.lasius.wsimport.enterprise.util.EnterpriseWebServiceUtil
 import shapeless.HList
 
 import scala.async.Async.{async, await}
@@ -29,7 +31,7 @@ trait SalesForceConversions {
   implicit def queryResultToList[T](qResult: QueryResult)(implicit executionContext: ExecutionContext): Future[Seq[T]] =
     async {
       if (qResult != null && qResult.getSize > 0) {
-        val records = qResult.getRecords.asScala.toSeq.asInstanceOf[Seq[T]]
+        val records = qResult.getRecords.asScala.asInstanceOf[Seq[T]]
         if (qResult.isDone) records
         else records ++ await(queryResultToList(await(port).queryMore(qResult.getQueryLocator)))
       } else {
@@ -40,11 +42,19 @@ trait SalesForceConversions {
 
 trait SalesForceConnection {
   this: SalesForceConversions =>
-  implicit val executionContext: ExecutionContext
+
+  @throws(classOf[SalesForceQueryException])
+  def query[T <: SObject, C <: HList](query: SelectQuery[C])(implicit executionContext: ExecutionContext): Future[Seq[T]]
+}
+
+class SalesForceConnectionImpl(propertiesPath: String)(implicit val executionContext: ExecutionContext) extends SalesForceConnection with SalesForceConversions {
+  def this(propertiesFile: File)(implicit executionContext: ExecutionContext) {
+    this(propertiesFile.getAbsolutePath)
+  }
 
   implicit val port: Future[PortType] = Future {
     val p: PortType = EnterpriseWebServiceUtil.createEnterpriseProxyPort(
-      new PropertiesCredentials(new FilePropertiesMgr(getClass.getClassLoader.getResource("salesforce.properties").getPath)),
+      new PropertiesCredentials(new FilePropertiesMgr(propertiesPath)),
       "enterprise.wsdl.xml",
       classOf[SforceService]
     )
@@ -52,7 +62,7 @@ trait SalesForceConnection {
   }
 
   @throws(classOf[SalesForceQueryException])
-  def query[T <: SObject, C <: HList](query: SelectQuery[C])(implicit executionContext: ExecutionContext): Future[Seq[T]] = async {
+  override def query[T <: SObject, C <: HList](query: SelectQuery[C])(implicit executionContext: ExecutionContext): Future[Seq[T]] = async {
     val p = await(port)
     Try(p.queryAll(query.toString)) match {
       case Success(r) => await(r)
@@ -60,5 +70,3 @@ trait SalesForceConnection {
     }
   }
 }
-
-class SalesForceConnectionImpl(override implicit val executionContext: ExecutionContext) extends SalesForceConnection with SalesForceConversions

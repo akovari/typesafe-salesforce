@@ -30,8 +30,9 @@
         </dependency>
         <dependency>
             <groupId>org.solenopsis.lasius</groupId>
-            <artifactId>wsutils-utils</artifactId>
+            <artifactId>wsutils-parent</artifactId>
             <version>${lasius.version}</version>
+            <type>pom</type>
         </dependency>
         <dependency>
             <groupId>org.scala-lang.modules</groupId>
