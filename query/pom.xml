@@ -62,7 +62,7 @@
         </dependency>
         <dependency>
             <groupId>org.scalatest</groupId>
-            <artifactId>scalatest_2.11</artifactId>
+            <artifactId>scalatest_${scala.base.version}</artifactId>
             <version>${scalatest.version}</version>
             <scope>test</scope>
             <exclusions>
@@ -73,13 +73,18 @@
             </exclusions>
         </dependency>
         <dependency>
+            <groupId>org.scalactic</groupId>
+            <artifactId>scalactic_${scala.base.version}</artifactId>
+            <version>${scalactic.version}</version>
+        </dependency>
+        <dependency>
             <groupId>org.scala-lang</groupId>
             <artifactId>scala-reflect</artifactId>
             <version>${scala.version}</version>
         </dependency>
         <dependency>
             <groupId>com.chuusai</groupId>
-            <artifactId>shapeless_2.11</artifactId>
+            <artifactId>shapeless_${scala.base.version}</artifactId>
             <version>${shapeless.version}</version>
         </dependency>
     </dependencies>

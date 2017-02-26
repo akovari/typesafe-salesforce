@@ -36,7 +36,7 @@
         </dependency>
         <dependency>
             <groupId>org.scala-lang.modules</groupId>
-            <artifactId>scala-async_2.11</artifactId>
+            <artifactId>scala-async_${scala.base.version}</artifactId>
             <version>${scala-async.version}</version>
             <exclusions>
                 <exclusion>

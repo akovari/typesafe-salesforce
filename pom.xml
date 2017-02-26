@@ -30,12 +30,14 @@
         <validation.api.version>1.1.0.Final</validation.api.version>
         <scala-maven-plugin.version>3.2.1</scala-maven-plugin.version>
         <maven-compiler-plugin.version>3.3</maven-compiler-plugin.version>
-        <scala.version>2.11.7</scala.version>
+        <scala.base.version>2.12</scala.base.version>
+        <scala.version>${scala.base.version}.1</scala.version>
         <lasius.version>3.0.26</lasius.version>
-        <scala-async.version>0.9.5</scala-async.version>
-        <joda-time.version>2.7</joda-time.version>
-        <scalatest.version>2.2.4</scalatest.version>
-        <shapeless.version>2.3.0</shapeless.version>
+        <scala-async.version>0.9.6</scala-async.version>
+        <joda-time.version>2.9.7</joda-time.version>
+        <scalatest.version>3.0.1</scalatest.version>
+        <scalactic.version>3.0.1</scalactic.version>
+        <shapeless.version>2.3.2</shapeless.version>
         <maven.surefire.plugin.version>2.18.1</maven.surefire.plugin.version>
         <maven.scalatest.plugin.version>1.0</maven.scalatest.plugin.version>
     </properties>
