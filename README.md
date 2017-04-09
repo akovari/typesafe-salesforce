@@ -2,6 +2,9 @@
 
 This is a DSL for writing SalesForce SOQL queries using a type-safe manner in Scala.
 
+Examples can be found in [tests](query/src/test/scala/com/github/akovari/typesafeSalesforce/query/SelectQuerySpec.scala).
+
+
 This project requires maven 3 and JDK 8 or higher.
 
 To install the library use:
